@@ -27,7 +27,7 @@ module BCP47
         , Language
         , LanguageExtension
         , LanguageTag
-            ( GrandfatheredLanguageTag
+            ( Grandfathered
             , LanguageTag
             , PrivateUse
             )
@@ -37,7 +37,7 @@ module BCP47
             , UN_M49
             )
         , Regular
-            ( ArgLojban
+            ( ArtLojban
             , CelGaulish
             , NoBok
             , NoNyn
@@ -47,13 +47,13 @@ module BCP47
             , ZhMinNan
             , ZhXiang
             )
-        , parser
+        , fromString
         )
 
 {-| Parser language tags according to the [BCP
 47](https://tools.ietf.org/html/rfc5646) specifications.
 
-@docs parser
+@docs fromString
 
 @docs LanguageTag, LanguageTagData, Language, LanguageExtension, Region, Extension, Grandfathered, Irregular, Regular
 
@@ -63,11 +63,13 @@ import Char
 import Parser exposing (..)
 
 
-{-| -}
+{-| This type models a language tag according to the specification in [BCP
+47](https://tools.ietf.org/html/rfc5646).
+-}
 type LanguageTag
     = LanguageTag LanguageTagData
     | PrivateUse (List String)
-    | GrandfatheredLanguageTag Grandfathered
+    | Grandfathered Grandfathered
 
 
 {-| -}
@@ -137,7 +139,7 @@ type Irregular
 
 {-| -}
 type Regular
-    = ArgLojban
+    = ArtLojban
     | CelGaulish
     | NoBok
     | NoNyn
@@ -148,19 +150,111 @@ type Regular
     | ZhXiang
 
 
+canonicalize : LanguageTag -> LanguageTag
+canonicalize languageTag =
+    case languageTag of
+        LanguageTag ({ language } as languageTagData) ->
+            LanguageTag
+                { language =
+                    { shortestIso639Code =
+                        String.toLower language.shortestIso639Code
+                    , extension =
+                        Maybe.map
+                            (\languageExtension ->
+                                { selectedIso639Code =
+                                    String.toLower languageExtension.selectedIso639Code
+                                , reserved =
+                                    List.map String.toLower languageExtension.reserved
+                                }
+                            )
+                            language.extension
+                    }
+                , script = Maybe.map capitalize languageTagData.script
+                , region =
+                    Maybe.map
+                        (\region ->
+                            case region of
+                                ISO3166_1 text ->
+                                    ISO3166_1 (String.toUpper text)
+
+                                UN_M49 _ ->
+                                    region
+                        )
+                        languageTagData.region
+                , variants = List.map (canonicalizeSubTag 1) languageTagData.variants
+                , extensions =
+                    List.map
+                        (\extension ->
+                            { kind = String.toLower extension.kind
+                            , values = List.indexedMap canonicalizeSubTag extension.values
+                            }
+                        )
+                        languageTagData.extensions
+                , privateUse = List.indexedMap canonicalizeSubTag languageTagData.privateUse
+                }
+
+        PrivateUse values ->
+            PrivateUse (List.indexedMap canonicalizeSubTag values)
+
+        Grandfathered _ ->
+            languageTag
+
+
+capitalize : String -> String
+capitalize text =
+    case String.toList text of
+        first :: rest ->
+            String.cons
+                (Char.toUpper first)
+                (rest
+                    |> String.fromList
+                    |> String.toLower
+                )
+
+        [] ->
+            ""
+
+
+canonicalizeSubTag : Int -> String -> String
+canonicalizeSubTag index text =
+    if index /= 0 then
+        case String.length text of
+            2 ->
+                String.toUpper text
+
+            4 ->
+                capitalize text
+
+            _ ->
+                String.toLower text
+    else
+        String.toLower text
+
+
 
 ---- PARSER
 
 
-{-| -}
+{-| Attempt to read a language tag from a string.
+-}
+fromString : String -> Result Parser.Error LanguageTag
+fromString =
+    String.toLower
+        >> Parser.run parser
+        >> Result.map canonicalize
+
+
 parser : Parser LanguageTag
 parser =
     oneOf
-        [ map PrivateUse privateUseParser
+        [ map Grandfathered grandfatheredParser
+        , map PrivateUse privateUseParser
         , map LanguageTag languageTagDataParser
-
-        --, grandfatheredParser
         ]
+
+
+
+-- LANGUAGE TAG DATA
 
 
 languageTagDataParser : Parser LanguageTagData
@@ -292,6 +386,10 @@ valueParser =
     untilEndOrMinus (alphaRange 2 8)
 
 
+
+-- PRIVATE USE
+
+
 privateUseParser : Parser (List String)
 privateUseParser =
     delayedCommit
@@ -322,6 +420,56 @@ privateUseValuesParserHelp values =
 privateUseValueParser : Parser String
 privateUseValueParser =
     untilEndOrMinus (alphaRange 1 8)
+
+
+
+-- GRANDFATHERED
+
+
+grandfatheredParser : Parser Grandfathered
+grandfatheredParser =
+    oneOf
+        [ map Irregular irregularParser
+        , map Regular regularParser
+        ]
+
+
+irregularParser : Parser Irregular
+irregularParser =
+    oneOf
+        [ succeed EnGBOed |. keyword "en-gb-oed"
+        , succeed IAmi |. keyword "i-ami"
+        , succeed IBnn |. keyword "i-bnn"
+        , succeed IDefault |. keyword "i-default"
+        , succeed IEnochian |. keyword "i-enochian"
+        , succeed IHak |. keyword "i-hak"
+        , succeed IKlingon |. keyword "i-klingon"
+        , succeed ILux |. keyword "i-lux"
+        , succeed IMingo |. keyword "i-mingo"
+        , succeed INavajo |. keyword "i-navajo"
+        , succeed IPwn |. keyword "i-pwn"
+        , succeed ITao |. keyword "i-tao"
+        , succeed ITay |. keyword "i-tay"
+        , succeed ITsu |. keyword "i-tsu"
+        , succeed SgnBEFR |. keyword "sgn-be-fr"
+        , succeed SgnBENL |. keyword "sgn-be-nl"
+        , succeed SgnCHDE |. keyword "sgn-ch-de"
+        ]
+
+
+regularParser : Parser Regular
+regularParser =
+    oneOf
+        [ succeed ArtLojban |. keyword "art-lojban"
+        , succeed CelGaulish |. keyword "cel-gaulish"
+        , succeed NoBok |. keyword "no-bok"
+        , succeed NoNyn |. keyword "no-nyn"
+        , succeed ZhGuoyu |. keyword "zh-guoyu"
+        , succeed ZhHakka |. keyword "zh-hakka"
+        , succeed ZhMin |. keyword "zh-min"
+        , succeed ZhMinNan |. keyword "zh-min-nan"
+        , succeed ZhXiang |. keyword "zh-xiang"
+        ]
 
 
 

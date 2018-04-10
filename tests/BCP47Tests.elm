@@ -2,7 +2,6 @@ module BCP47Tests exposing (..)
 
 import BCP47 exposing (..)
 import Expect
-import Parser
 import Test exposing (..)
 
 
@@ -12,7 +11,7 @@ parserTest =
         [ test "Simple language subtag" <|
             \_ ->
                 "en"
-                    |> Parser.run parser
+                    |> fromString
                     |> Expect.equal
                         (Ok <|
                             LanguageTag
@@ -30,7 +29,7 @@ parserTest =
         , test "Language subtag plus script subtag" <|
             \_ ->
                 "zh-Hant"
-                    |> Parser.run parser
+                    |> fromString
                     |> Expect.equal
                         (Ok <|
                             LanguageTag
@@ -49,7 +48,7 @@ parserTest =
             [ test "Chinese, Mandarin, Simplified script, as used in China" <|
                 \_ ->
                     "zh-cmn-Hans-CN"
-                        |> Parser.run parser
+                        |> fromString
                         |> Expect.equal
                             (Ok <|
                                 LanguageTag
@@ -71,7 +70,7 @@ parserTest =
             , test "Mandarin Chinese, Simplified script, as used in China" <|
                 \_ ->
                     "cmn-Hans-CN"
-                        |> Parser.run parser
+                        |> fromString
                         |> Expect.equal
                             (Ok <|
                                 LanguageTag
@@ -89,7 +88,7 @@ parserTest =
             , test "Chinese, Cantonese, as used in Hong Kong SAR" <|
                 \_ ->
                     "zh-yue-HK"
-                        |> Parser.run parser
+                        |> fromString
                         |> Expect.equal
                             (Ok <|
                                 LanguageTag
@@ -111,7 +110,7 @@ parserTest =
             , test "Cantonese Chinese, as used in Hong Kong SAR" <|
                 \_ ->
                     "yue-HK"
-                        |> Parser.run parser
+                        |> fromString
                         |> Expect.equal
                             (Ok <|
                                 LanguageTag
@@ -131,7 +130,7 @@ parserTest =
             [ test "Chinese written using the Simplified script as used in mainland China" <|
                 \_ ->
                     "zh-Hans-CN"
-                        |> Parser.run parser
+                        |> fromString
                         |> Expect.equal
                             (Ok <|
                                 LanguageTag
@@ -149,7 +148,7 @@ parserTest =
             , test "Serbian written using the Latin script as used in Serbia" <|
                 \_ ->
                     "sr-Latn-RS"
-                        |> Parser.run parser
+                        |> fromString
                         |> Expect.equal
                             (Ok <|
                                 LanguageTag
@@ -169,7 +168,7 @@ parserTest =
             [ test "Resian dialect of Slovenian" <|
                 \_ ->
                     "sl-rozaj"
-                        |> Parser.run parser
+                        |> fromString
                         |> Expect.equal
                             (Ok <|
                                 LanguageTag
@@ -187,7 +186,7 @@ parserTest =
             , test "San Giorgio dialect of Resian dialect of Slovenian" <|
                 \_ ->
                     "sl-rozaj-biske"
-                        |> Parser.run parser
+                        |> fromString
                         |> Expect.equal
                             (Ok <|
                                 LanguageTag
@@ -205,7 +204,7 @@ parserTest =
             , test "Nadiza dialect of Slovenian" <|
                 \_ ->
                     "sl-nedis"
-                        |> Parser.run parser
+                        |> fromString
                         |> Expect.equal
                             (Ok <|
                                 LanguageTag
@@ -225,7 +224,7 @@ parserTest =
             [ test "German as used in Switzerland using the 1901 variant [orthography]" <|
                 \_ ->
                     "de-CH-1901"
-                        |> Parser.run parser
+                        |> fromString
                         |> Expect.equal
                             (Ok <|
                                 LanguageTag
@@ -243,7 +242,7 @@ parserTest =
             , test "Slovenian as used in Italy, Nadiza dialect" <|
                 \_ ->
                     "sl-IT-nedis"
-                        |> Parser.run parser
+                        |> fromString
                         |> Expect.equal
                             (Ok <|
                                 LanguageTag
@@ -263,7 +262,7 @@ parserTest =
             [ test "Eastern Armenian written in Latin script, as used in Italy" <|
                 \_ ->
                     "hy-Latn-IT-arevela"
-                        |> Parser.run parser
+                        |> fromString
                         |> Expect.equal
                             (Ok <|
                                 LanguageTag
@@ -283,7 +282,7 @@ parserTest =
             [ test "German for Germany" <|
                 \_ ->
                     "de-DE"
-                        |> Parser.run parser
+                        |> fromString
                         |> Expect.equal
                             (Ok <|
                                 LanguageTag
@@ -301,7 +300,7 @@ parserTest =
             , test "English as used in the United States" <|
                 \_ ->
                     "en-US"
-                        |> Parser.run parser
+                        |> fromString
                         |> Expect.equal
                             (Ok <|
                                 LanguageTag
@@ -319,7 +318,7 @@ parserTest =
             , test "Spanish appropriate for the Latin America and Caribbean region using the UN region code" <|
                 \_ ->
                     "es-419"
-                        |> Parser.run parser
+                        |> fromString
                         |> Expect.equal
                             (Ok <|
                                 LanguageTag
@@ -339,7 +338,7 @@ parserTest =
             [ test "Phonebook variant of the German sort order" <|
                 \_ ->
                     "de-DE-u-co-phonebk"
-                        |> Parser.run parser
+                        |> fromString
                         |> Expect.equal
                             (Ok <|
                                 LanguageTag
@@ -360,8 +359,8 @@ parserTest =
                             )
             , test "Use Thai digits in number formatting" <|
                 \_ ->
-                    "th-TH-u-nu-thai"
-                        |> Parser.run parser
+                    "th-TH-u-nu-Thai"
+                        |> fromString
                         |> Expect.equal
                             (Ok <|
                                 LanguageTag
@@ -374,7 +373,7 @@ parserTest =
                                     , variants = []
                                     , extensions =
                                         [ { kind = "u"
-                                          , values = [ "nu", "thai" ]
+                                          , values = [ "nu", "Thai" ]
                                           }
                                         ]
                                     , privateUse = []
@@ -383,7 +382,7 @@ parserTest =
             , test "Use the Japanese calendar in date and time formatting" <|
                 \_ ->
                     "ja-JP-u-ca-japanese"
-                        |> Parser.run parser
+                        |> fromString
                         |> Expect.equal
                             (Ok <|
                                 LanguageTag
@@ -405,7 +404,7 @@ parserTest =
             , test "British English with the Islamic (Hijri) calendar" <|
                 \_ ->
                     "en-GB-u-ca-islamic"
-                        |> Parser.run parser
+                        |> fromString
                         |> Expect.equal
                             (Ok <|
                                 LanguageTag
@@ -429,7 +428,7 @@ parserTest =
             [ test "de-CH-x-phonebk" <|
                 \_ ->
                     "de-CH-x-phonebk"
-                        |> Parser.run parser
+                        |> fromString
                         |> Expect.equal
                             (Ok <|
                                 LanguageTag
@@ -444,10 +443,10 @@ parserTest =
                                     , privateUse = [ "phonebk" ]
                                     }
                             )
-            , test "az-Arab-x-AZE-derbend" <|
+            , test "az-Arab-x-aze-derbend" <|
                 \_ ->
-                    "az-Arab-x-AZE-derbend"
-                        |> Parser.run parser
+                    "az-Arab-x-aze-derbend"
+                        |> fromString
                         |> Expect.equal
                             (Ok <|
                                 LanguageTag
@@ -459,14 +458,14 @@ parserTest =
                                     , region = Nothing
                                     , variants = []
                                     , extensions = []
-                                    , privateUse = [ "AZE", "derbend" ]
+                                    , privateUse = [ "aze", "derbend" ]
                                     }
                             )
             ]
         , test "Private use" <|
             \_ ->
                 "x-whatever"
-                    |> Parser.run parser
+                    |> fromString
                     |> Expect.equal
                         (Ok <|
                             PrivateUse [ "whatever" ]
