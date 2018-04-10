@@ -5,9 +5,9 @@ import Expect
 import Test exposing (..)
 
 
-parserTest : Test
-parserTest =
-    describe "parser"
+fromStringTest : Test
+fromStringTest =
+    describe "fromString"
         [ test "Simple language subtag" <|
             \_ ->
                 "en"
@@ -471,3 +471,43 @@ parserTest =
                             PrivateUse [ "whatever" ]
                         )
         ]
+
+
+asStringTest : Test
+asStringTest =
+    let
+        roundtrip text =
+            test text <|
+                \_ ->
+                    text
+                        |> fromString
+                        |> Result.map asString
+                        |> Expect.equal (Ok text)
+    in
+    describe "asString" <|
+        List.map roundtrip
+            [ "en"
+            , "zh-Hant"
+            , "zh-cmn-Hans-CN"
+            , "cmn-Hans-CN"
+            , "zh-yue-HK"
+            , "yue-HK"
+            , "zh-Hans-CN"
+            , "sr-Latn-RS"
+            , "sl-rozaj"
+            , "sl-rozaj-biske"
+            , "sl-nedis"
+            , "de-CH-1901"
+            , "sl-IT-nedis"
+            , "hy-Latn-IT-arevela"
+            , "de-DE"
+            , "en-US"
+            , "es-419"
+            , "de-DE-u-co-phonebk"
+            , "th-TH-u-nu-Thai"
+            , "ja-JP-u-ca-japanese"
+            , "en-GB-u-ca-islamic"
+            , "de-CH-x-phonebk"
+            , "az-Arab-x-aze-derbend"
+            , "x-whatever"
+            ]

@@ -47,15 +47,16 @@ module BCP47
             , ZhMinNan
             , ZhXiang
             )
+        , asString
         , fromString
         )
 
 {-| Parser language tags according to the [BCP
 47](https://tools.ietf.org/html/rfc5646) specifications.
 
-@docs fromString
-
 @docs LanguageTag, LanguageTagData, Language, LanguageExtension, Region, Extension, Grandfathered, Irregular, Regular
+
+@docs fromString, asString
 
 -}
 
@@ -148,6 +149,156 @@ type Regular
     | ZhMin
     | ZhMinNan
     | ZhXiang
+
+
+{-| Convert a `LanguageTag` into its canonical string representation.
+-}
+asString : LanguageTag -> String
+asString languageTag =
+    case canonicalize languageTag of
+        LanguageTag languageTagData ->
+            [ Just languageTagData.language.shortestIso639Code
+            , Maybe.map .selectedIso639Code languageTagData.language.extension
+            , languageTagData.language.extension
+                |> Maybe.andThen
+                    (\extension ->
+                        if List.isEmpty extension.reserved then
+                            Nothing
+                        else
+                            extension.reserved
+                                |> String.join "-"
+                                |> Just
+                    )
+            , languageTagData.script
+            , languageTagData.region
+                |> Maybe.map
+                    (\region ->
+                        case region of
+                            ISO3166_1 text ->
+                                text
+
+                            UN_M49 digit ->
+                                toString digit
+                    )
+            , if List.isEmpty languageTagData.variants then
+                Nothing
+              else
+                languageTagData.variants
+                    |> String.join "-"
+                    |> Just
+            , if List.isEmpty languageTagData.extensions then
+                Nothing
+              else
+                languageTagData.extensions
+                    |> List.map
+                        (\extension ->
+                            [ extension.kind
+                            , extension.values
+                                |> String.join "-"
+                            ]
+                                |> String.join "-"
+                        )
+                    |> String.join "-"
+                    |> Just
+            , if List.isEmpty languageTagData.privateUse then
+                Nothing
+              else
+                [ "x"
+                , languageTagData.privateUse
+                    |> String.join "-"
+                ]
+                    |> String.join "-"
+                    |> Just
+            ]
+                |> List.filterMap identity
+                |> String.join "-"
+
+        PrivateUse values ->
+            String.join "-" ("x" :: values)
+
+        Grandfathered grandfathered ->
+            case grandfathered of
+                Irregular irregular ->
+                    case irregular of
+                        EnGBOed ->
+                            "en-GB-oed"
+
+                        IAmi ->
+                            "i-ami"
+
+                        IBnn ->
+                            "i-bnn"
+
+                        IDefault ->
+                            "i-default"
+
+                        IEnochian ->
+                            "i-enochian"
+
+                        IHak ->
+                            "i-hak"
+
+                        IKlingon ->
+                            "i-klingon"
+
+                        ILux ->
+                            "i-lux"
+
+                        IMingo ->
+                            "i-mingo"
+
+                        INavajo ->
+                            "i-navajo"
+
+                        IPwn ->
+                            "i-pwn"
+
+                        ITao ->
+                            "i-tao"
+
+                        ITay ->
+                            "i-tay"
+
+                        ITsu ->
+                            "i-tsu"
+
+                        SgnBEFR ->
+                            "sgn-BE-FR"
+
+                        SgnBENL ->
+                            "sgn-BE-NL"
+
+                        SgnCHDE ->
+                            "sgn-CH-DE"
+
+                Regular regular ->
+                    case regular of
+                        ArtLojban ->
+                            "arg-lojban"
+
+                        CelGaulish ->
+                            "cel-gaulish"
+
+                        NoBok ->
+                            "no-bok"
+
+                        NoNyn ->
+                            "no-nyn"
+
+                        ZhGuoyu ->
+                            "zh-guoyu"
+
+                        ZhHakka ->
+                            "zh-hakka"
+
+                        ZhMin ->
+                            "zh-min"
+
+                        ZhMinNan ->
+                            "zh-min-nan"
+
+                        ZhXiang ->
+                            "zh-xiang"
 
 
 canonicalize : LanguageTag -> LanguageTag
