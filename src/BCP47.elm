@@ -51,12 +51,12 @@ module BCP47
         , fromString
         )
 
-{-| Parser language tags according to the [BCP
+{-| Parse language tags according to the [BCP
 47](https://tools.ietf.org/html/rfc5646) specifications.
 
-@docs LanguageTag, LanguageTagData, Language, LanguageExtension, Region, Extension, Grandfathered, Irregular, Regular
-
 @docs fromString, asString
+
+@docs LanguageTag, LanguageTagData, Language, LanguageExtension, Region, Extension, Grandfathered, Irregular, Regular
 
 -}
 
